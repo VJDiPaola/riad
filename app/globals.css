@@ -4,79 +4,104 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  /* Moroccan palette — Marrakech terracotta, bone/cream, Majorelle blue, espresso, brass */
+  --background: oklch(0.962 0.018 78);
+  --foreground: oklch(0.24 0.028 38);
+
+  --card: oklch(0.985 0.012 78);
+  --card-foreground: oklch(0.24 0.028 38);
+
+  --popover: oklch(0.985 0.012 78);
+  --popover-foreground: oklch(0.24 0.028 38);
+
+  /* Terracotta clay — Marrakech */
+  --primary: oklch(0.555 0.155 38);
+  --primary-foreground: oklch(0.985 0.012 78);
+
+  /* Warm sand */
+  --secondary: oklch(0.915 0.026 72);
+  --secondary-foreground: oklch(0.28 0.025 35);
+
+  --muted: oklch(0.93 0.02 75);
+  --muted-foreground: oklch(0.46 0.03 42);
+
+  /* Majorelle deep cobalt blue */
+  --accent: oklch(0.44 0.135 248);
+  --accent-foreground: oklch(0.985 0.012 78);
+
+  --destructive: oklch(0.55 0.21 28);
+  --destructive-foreground: oklch(0.985 0.012 78);
+
+  --border: oklch(0.86 0.024 70);
+  --input: oklch(0.88 0.022 72);
+  --ring: oklch(0.555 0.155 38);
+
+  /* Chart palette: terracotta, Majorelle, brass, riad green, dusty rose */
+  --chart-1: oklch(0.585 0.16 38);
+  --chart-2: oklch(0.46 0.14 248);
+  --chart-3: oklch(0.74 0.115 82);
+  --chart-4: oklch(0.55 0.085 165);
+  --chart-5: oklch(0.66 0.09 22);
+
+  --radius: 0.5rem;
+
+  /* Brass accent token */
+  --brass: oklch(0.74 0.115 82);
+  --brass-foreground: oklch(0.24 0.028 38);
+
+  /* Sidebar */
+  --sidebar: oklch(0.94 0.022 76);
+  --sidebar-foreground: oklch(0.24 0.028 38);
+  --sidebar-primary: oklch(0.555 0.155 38);
+  --sidebar-primary-foreground: oklch(0.985 0.012 78);
+  --sidebar-accent: oklch(0.915 0.026 72);
+  --sidebar-accent-foreground: oklch(0.28 0.025 35);
+  --sidebar-border: oklch(0.86 0.024 70);
+  --sidebar-ring: oklch(0.555 0.155 38);
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.145 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.145 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.985 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.396 0.141 25.723);
-  --destructive-foreground: oklch(0.637 0.237 25.331);
-  --border: oklch(0.269 0 0);
-  --input: oklch(0.269 0 0);
-  --ring: oklch(0.439 0 0);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(0.269 0 0);
-  --sidebar-ring: oklch(0.439 0 0);
+  --background: oklch(0.18 0.022 38);
+  --foreground: oklch(0.96 0.018 78);
+  --card: oklch(0.22 0.025 38);
+  --card-foreground: oklch(0.96 0.018 78);
+  --popover: oklch(0.22 0.025 38);
+  --popover-foreground: oklch(0.96 0.018 78);
+  --primary: oklch(0.62 0.16 40);
+  --primary-foreground: oklch(0.18 0.022 38);
+  --secondary: oklch(0.28 0.028 38);
+  --secondary-foreground: oklch(0.96 0.018 78);
+  --muted: oklch(0.28 0.028 38);
+  --muted-foreground: oklch(0.74 0.025 70);
+  --accent: oklch(0.55 0.145 248);
+  --accent-foreground: oklch(0.96 0.018 78);
+  --destructive: oklch(0.6 0.21 28);
+  --destructive-foreground: oklch(0.96 0.018 78);
+  --border: oklch(0.32 0.028 38);
+  --input: oklch(0.32 0.028 38);
+  --ring: oklch(0.62 0.16 40);
+  --chart-1: oklch(0.62 0.16 40);
+  --chart-2: oklch(0.62 0.15 248);
+  --chart-3: oklch(0.78 0.13 82);
+  --chart-4: oklch(0.6 0.09 165);
+  --chart-5: oklch(0.7 0.1 22);
+  --brass: oklch(0.78 0.13 82);
+  --brass-foreground: oklch(0.18 0.022 38);
+  --sidebar: oklch(0.22 0.025 38);
+  --sidebar-foreground: oklch(0.96 0.018 78);
+  --sidebar-primary: oklch(0.62 0.16 40);
+  --sidebar-primary-foreground: oklch(0.18 0.022 38);
+  --sidebar-accent: oklch(0.28 0.028 38);
+  --sidebar-accent-foreground: oklch(0.96 0.018 78);
+  --sidebar-border: oklch(0.32 0.028 38);
+  --sidebar-ring: oklch(0.62 0.16 40);
 }
 
 @theme inline {
-  --font-sans: 'Geist', 'Geist Fallback';
-  --font-mono: 'Geist Mono', 'Geist Mono Fallback';
+  --font-sans: var(--font-geist), 'Geist Fallback', ui-sans-serif, system-ui;
+  --font-serif: var(--font-fraunces), 'Fraunces Fallback', ui-serif, Georgia;
+  --font-mono: var(--font-geist-mono), 'Geist Mono Fallback', ui-monospace;
+
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -101,10 +126,14 @@
   --color-chart-3: var(--chart-3);
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
+  --color-brass: var(--brass);
+  --color-brass-foreground: var(--brass-foreground);
+
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-primary: var(--sidebar-primary);
@@ -121,5 +150,64 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@layer utilities {
+  /* Subtle Moroccan zellige-inspired tile pattern */
+  .bg-zellige {
+    background-color: var(--background);
+    background-image:
+      radial-gradient(circle at 1px 1px, color-mix(in oklch, var(--primary) 12%, transparent) 1.2px, transparent 1.5px),
+      radial-gradient(circle at 21px 21px, color-mix(in oklch, var(--accent) 10%, transparent) 1.2px, transparent 1.5px);
+    background-size: 40px 40px, 40px 40px;
+    background-position: 0 0, 20px 20px;
+  }
+
+  .bg-zellige-dense {
+    background-color: var(--card);
+    background-image:
+      linear-gradient(45deg, color-mix(in oklch, var(--primary) 6%, transparent) 25%, transparent 25%),
+      linear-gradient(-45deg, color-mix(in oklch, var(--accent) 5%, transparent) 25%, transparent 25%),
+      linear-gradient(45deg, transparent 75%, color-mix(in oklch, var(--primary) 6%, transparent) 75%),
+      linear-gradient(-45deg, transparent 75%, color-mix(in oklch, var(--accent) 5%, transparent) 75%);
+    background-size: 24px 24px;
+    background-position: 0 0, 0 12px, 12px -12px, -12px 0;
+  }
+
+  /* Soft "I'm here" pulse for body double presence */
+  .presence-pulse {
+    animation: presence-pulse 3.5s ease-in-out infinite;
+  }
+  @keyframes presence-pulse {
+    0%, 100% { opacity: 0.55; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.06); }
+  }
+
+  /* Gentle breathing for ambient companion state */
+  .breathe {
+    animation: breathe 5s ease-in-out infinite;
+  }
+  @keyframes breathe {
+    0%, 100% { transform: scale(1); opacity: 0.92; }
+    50% { transform: scale(1.02); opacity: 1; }
+  }
+
+  /* Brass underline accent */
+  .brass-underline {
+    background-image: linear-gradient(to right, var(--brass), color-mix(in oklch, var(--brass) 50%, transparent));
+    background-repeat: no-repeat;
+    background-position: 0 100%;
+    background-size: 100% 3px;
+    padding-bottom: 2px;
+  }
+
+  @keyframes waveform {
+    0%, 100% { transform: scaleY(0.4); }
+    50% { transform: scaleY(1.1); }
+  }
+  .waveform-bar {
+    animation: waveform 0.9s ease-in-out infinite;
+    transform-origin: bottom center;
   }
 }
