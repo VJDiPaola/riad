@@ -9,7 +9,7 @@ import { VoiceMicButton } from "./voice-mic-button"
 import { useSpeechRecognition } from "@/hooks/use-speech-recognition"
 import { useSpeechSynthesis } from "@/hooks/use-speech-synthesis"
 import { Button } from "@/components/ui/button"
-import { Languages, Headphones, ShieldCheck } from "lucide-react"
+import { Languages, Headphones, ShieldCheck, Volume2, AlertTriangle, ExternalLink } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 const STATUS_COPY: Record<string, { en: string; es: string }> = {
@@ -31,12 +31,22 @@ export function CompanionPanel() {
   } = useCompanion()
 
   const speechLang = language === "es" ? "es-ES" : "en-US"
-  const { supported, listening, interim, finalTranscript, start, stop, reset } = useSpeechRecognition({
+  const {
+    supported,
+    listening,
+    interim,
+    finalTranscript,
+    error: srError,
+    permission,
+    start,
+    stop,
+    reset,
+  } = useSpeechRecognition({
     lang: speechLang,
     continuous: false,
     interimResults: true,
   })
-  const { speak } = useSpeechSynthesis()
+  const { supported: ttsSupported, speak, error: ttsError } = useSpeechSynthesis()
 
   // Mirror SR state into companion status
   useEffect(() => {
@@ -69,9 +79,30 @@ export function CompanionPanel() {
     if (listening) {
       stop()
     } else {
-      start()
+      // start() will request mic permission first if needed
+      void start()
     }
   }, [listening, start, stop])
+
+  const onTestSound = useCallback(() => {
+    const phrase =
+      language === "es"
+        ? "Hola, soy Riad. Si me escuchas, el sonido funciona."
+        : "Hi, I'm Riad. If you can hear me, sound is working."
+    setStatus("speaking")
+    speak(phrase, { lang: speechLang })
+    setTimeout(() => setStatus("ambient"), Math.max(1800, phrase.length * 40))
+  }, [language, speak, setStatus, speechLang])
+
+  // Friendly error banner copy
+  const banner = buildBanner({
+    srSupported: supported,
+    ttsSupported,
+    permission,
+    srError,
+    ttsError,
+    language,
+  })
 
   return (
     <aside
@@ -140,6 +171,34 @@ export function CompanionPanel() {
         )}
       </p>
 
+      {/* Voice status / error banner */}
+      {banner ? (
+        <div
+          role="status"
+          className={cn(
+            "flex items-start gap-2 rounded-lg border px-3 py-2.5 text-[12px] leading-relaxed",
+            banner.tone === "warning"
+              ? "border-brass/50 bg-brass/15 text-foreground"
+              : "border-border bg-secondary/40 text-secondary-foreground"
+          )}
+        >
+          <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-brass-foreground" />
+          <div className="flex flex-col gap-1.5">
+            <span>{banner.message}</span>
+            {banner.action ? (
+              <button
+                type="button"
+                onClick={banner.action.onClick}
+                className="inline-flex items-center gap-1 self-start text-[11px] font-medium uppercase tracking-[0.16em] text-primary hover:underline"
+              >
+                {banner.action.label}
+                {banner.action.icon}
+              </button>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
+
       {/* Pacing controls */}
       <PacingControls />
 
@@ -155,21 +214,26 @@ export function CompanionPanel() {
         <TranscriptLog interim={interim} />
       </div>
 
-      {/* Mic */}
+      {/* Mic + sound test */}
       <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-border bg-background/40 p-4">
         <VoiceMicButton
           listening={listening}
           supported={supported}
+          permission={permission}
           onToggle={onToggleMic}
           language={language}
         />
-        {!supported ? (
-          <p className="text-center text-[11px] leading-relaxed text-muted-foreground">
-            {language === "es"
-              ? "Tu navegador no soporta voz. Puedes escribir abajo en su lugar."
-              : "Your browser doesn't support voice. You can type below instead."}
-          </p>
-        ) : null}
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={onTestSound}
+          disabled={!ttsSupported}
+          className="h-7 gap-1.5 rounded-full text-[11px]"
+        >
+          <Volume2 className="h-3.5 w-3.5" />
+          {language === "es" ? "Probar sonido" : "Test sound"}
+        </Button>
       </div>
 
       {/* Privacy assurance */}
@@ -203,6 +267,101 @@ export function CompanionPanel() {
       ) : null}
     </aside>
   )
+}
+
+interface BannerInfo {
+  tone: "info" | "warning"
+  message: string
+  action?: { label: string; onClick: () => void; icon?: React.ReactNode }
+}
+
+function buildBanner({
+  srSupported,
+  ttsSupported,
+  permission,
+  srError,
+  ttsError,
+  language,
+}: {
+  srSupported: boolean
+  ttsSupported: boolean
+  permission: "unknown" | "prompt" | "granted" | "denied" | "unavailable"
+  srError: string | null
+  ttsError: string | null
+  language: "en" | "es"
+}): BannerInfo | null {
+  const openInNewTab = () => {
+    if (typeof window !== "undefined") window.open(window.location.href, "_blank", "noopener")
+  }
+
+  // Speech recognition unsupported (e.g. Firefox).
+  if (!srSupported) {
+    return {
+      tone: "info",
+      message:
+        language === "es"
+          ? "Tu navegador no soporta reconocimiento de voz. Puedes usar las sugerencias o escribir abajo — la narración sigue funcionando."
+          : "Your browser doesn't support voice input. You can use the suggested prompts or type — narration still works.",
+    }
+  }
+
+  // Mic blocked / denied — most likely cause inside the v0 preview iframe.
+  if (permission === "denied" || srError === "mic-blocked") {
+    return {
+      tone: "warning",
+      message:
+        language === "es"
+          ? "El micrófono está bloqueado en esta vista previa. Abre la app en una pestaña nueva para usar la voz, o toca una sugerencia / escribe a continuación."
+          : "The microphone is blocked in this preview. Open the app in a new tab to use voice, or tap a suggested prompt / type below.",
+      action: {
+        label: language === "es" ? "Abrir en pestaña nueva" : "Open in new tab",
+        onClick: openInNewTab,
+        icon: <ExternalLink className="h-3 w-3" />,
+      },
+    }
+  }
+
+  if (srError === "no-mic") {
+    return {
+      tone: "warning",
+      message:
+        language === "es"
+          ? "No detecto micrófono. Revisa tu dispositivo o usa las sugerencias / texto."
+          : "No microphone detected. Check your device or use the suggested prompts / typing.",
+    }
+  }
+
+  if (srError === "no-speech") {
+    return {
+      tone: "info",
+      message:
+        language === "es"
+          ? "No escuché nada esta vez. Toca el micrófono y vuelve a intentarlo."
+          : "I didn't catch anything that time. Tap the mic and try again.",
+    }
+  }
+
+  if (!ttsSupported) {
+    return {
+      tone: "info",
+      message:
+        language === "es"
+          ? "Tu navegador no puede leer en voz alta. Puedes leer las respuestas en la conversación."
+          : "Your browser can't read aloud. You can still read replies in the conversation.",
+    }
+  }
+
+  if (ttsError) {
+    return {
+      tone: "info",
+      message:
+        language === "es"
+          ? "Hubo un problema con el sonido. Intenta de nuevo o asegúrate de que tu navegador no esté silenciado."
+          : "Sound hit a snag. Try again, or make sure your browser tab isn't muted.",
+    }
+  }
+
+  return null
 }
 
 // Lightweight scripted reply composer — keeps demo self-contained.
