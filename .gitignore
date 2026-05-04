@@ -14,3 +14,10 @@ next.user-config.*
 node_modules
 .next/
 .DS_Store
+
+# Build artifacts
+tsconfig.tsbuildinfo
+
+# Local MCP server logs
+mcp.out
+mcp.err

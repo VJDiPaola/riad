@@ -1,7 +1,0 @@
-
-> my-project@0.1.0 mcp C:\Users\vince\Project_Codespaces\LAI_Hack\riad
-> tsx mcp/benefits-knowledge/server.ts
-
-[benefits-mcp] streamable http server listening on http://localhost:8787/mcp
-[benefits-mcp] plans loaded: Argan PPO, Atlas HDHP + HSA
- ELIFECYCLE  Command failed with exit code 4294967295.
