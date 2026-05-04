@@ -10,51 +10,20 @@ import {
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Sparkles, ArrowRight, Mic, Send } from "lucide-react"
-import { useSpeechSynthesis } from "@/hooks/use-speech-synthesis"
 import { toast } from "sonner"
 
 export function LifeInterviewPhase() {
   const {
     language,
     pushTranscript,
-    setStatus,
     updateProfile,
     profile,
     setPhase,
-    sessionId,
-    advance,
+    tellRiad,
   } = useCompanion()
-  const { speak } = useSpeechSynthesis()
   const [typed, setTyped] = useState("")
 
   const prompts = language === "es" ? SUGGESTED_PROMPTS_ES : SUGGESTED_PROMPTS_EN
-
-  async function tellRiad(text: string) {
-    pushTranscript("you", text, language)
-    setStatus("thinking")
-    let reply = composeNarrativeReply(text, language)
-    if (sessionId) {
-      try {
-        const result = await advance(sessionId, {
-          step: "ingestInterview",
-          input: { transcript: text, language },
-        })
-        const payload = result.payload as { summary?: string; profile?: typeof profile }
-        if (payload?.profile) {
-          updateProfile(payload.profile)
-        }
-        if (payload?.summary) {
-          reply = payload.summary
-        }
-      } catch (err) {
-        console.warn("[life-interview] advance failed, using local reply:", err)
-      }
-    }
-    pushTranscript("riad", reply, language)
-    setStatus("speaking")
-    speak(reply, { lang: language === "es" ? "es-ES" : "en-US" })
-    setTimeout(() => setStatus("ambient"), Math.max(1800, reply.length * 35))
-  }
 
   function applySampleProfile() {
     updateProfile(SAMPLE_PROFILE)
@@ -82,7 +51,7 @@ export function LifeInterviewPhase() {
 
   function submitTyped() {
     if (!typed.trim()) return
-    tellRiad(typed.trim())
+    void tellRiad(typed.trim())
     setTyped("")
   }
 
@@ -121,7 +90,7 @@ export function LifeInterviewPhase() {
             <button
               key={p}
               type="button"
-              onClick={() => tellRiad(p)}
+              onClick={() => void tellRiad(p)}
               className="group inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2 text-sm text-foreground transition-colors hover:border-primary/60 hover:bg-primary/5"
             >
               <Mic className="h-3.5 w-3.5 text-primary" />
@@ -211,28 +180,3 @@ export function LifeInterviewPhase() {
   )
 }
 
-function composeNarrativeReply(utter: string, lang: "en" | "es"): string {
-  const u = utter.toLowerCase()
-  if (lang === "es") {
-    if (u.includes("12 meses") || u.includes("paycheck") || u.includes("cheque")) {
-      return "Perfecto. En la siguiente etapa verás los próximos 12 meses lado a lado para los dos planes. ¿Cargamos algo de contexto primero o saltamos directo?"
-    }
-    if (u.includes("bebé") || u.includes("bebe") || u.includes("junio") || u.includes("agosto")) {
-      return "Anotado. Voy a marcar ese mes como un hito. Cuando pasemos al recorrido lo vas a ver claramente."
-    }
-    if (u.includes("urgenc") || u.includes("rough")) {
-      return "Vale. Voy a guardar esa preocupación: 'un año difícil'. Cuando comparemos planes, te mostraré el peor escenario realista."
-    }
-    return "Te escucho. Lo guardo como contexto. Cuando quieras, pasamos al recorrido de 12 meses."
-  }
-  if (u.includes("twelve") || u.includes("12 month") || u.includes("paycheck")) {
-    return "Good. In the next stage you'll see the full year side by side for both plans. Want me to load some context first, or jump in?"
-  }
-  if (u.includes("baby") || u.includes("june") || u.includes("august")) {
-    return "Noted. I'll pin that month as a milestone. When we move to the walkthrough you'll see exactly how it lands."
-  }
-  if (u.includes("rough") || u.includes("er")) {
-    return "Okay. I'll hold that worry — \"a rough year.\" When we compare plans I'll show the realistic worst case alongside the likely one."
-  }
-  return "I hear you. I'll keep that as context. Whenever you're ready, we can walk through the twelve months together."
-}

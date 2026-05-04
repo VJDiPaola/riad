@@ -27,6 +27,7 @@ import {
   startSession,
   subscribeToSession,
 } from "@/lib/companion/session-client"
+import { useSpeechSynthesis } from "@/hooks/use-speech-synthesis"
 
 interface CompanionState {
   phase: Phase
@@ -52,6 +53,7 @@ interface CompanionState {
   toolCalls: ToolCallLog[]
   checkIn: CheckInPayload | null
   advance: typeof advanceCall
+  tellRiad: (text: string) => Promise<void>
 }
 
 const CompanionContext = createContext<CompanionState | null>(null)
@@ -86,6 +88,7 @@ export function CompanionProvider({ children }: { children: ReactNode }) {
   const [toolCalls, setToolCalls] = useState<ToolCallLog[]>([])
   const [checkIn, setCheckIn] = useState<CheckInPayload | null>(null)
   const subscriptionRef = useRef<{ close: () => void } | null>(null)
+  const { speak } = useSpeechSynthesis()
 
   const pushTranscript = useCallback(
     (role: TranscriptRole, text: string, lang?: Language) => {
@@ -121,6 +124,47 @@ export function CompanionProvider({ children }: { children: ReactNode }) {
   const clearTranscript = useCallback(() => {
     setTranscript(SEED_TRANSCRIPT)
   }, [])
+
+  const sessionIdRef = useRef<string | null>(null)
+  useEffect(() => {
+    sessionIdRef.current = sessionId
+  }, [sessionId])
+
+  const tellRiad = useCallback(
+    async (text: string) => {
+      const utter = text.trim()
+      if (!utter) return
+      pushTranscript("you", utter, language)
+      setStatus("thinking")
+      let reply = composeFallbackReply(utter, language)
+      const sid = sessionIdRef.current
+      if (sid) {
+        try {
+          const result = await advanceCall(sid, {
+            step: "ingestInterview",
+            input: { transcript: utter, language },
+          })
+          const payload = result.payload as {
+            summary?: string
+            profile?: EmployeeProfile
+          }
+          if (payload?.profile) {
+            setProfile((prev) => mergeProfile(prev, payload.profile!))
+          }
+          if (payload?.summary) {
+            reply = payload.summary
+          }
+        } catch (err) {
+          console.warn("[companion-context] tellRiad advance failed:", err)
+        }
+      }
+      pushTranscript("riad", reply, language)
+      setStatus("speaking")
+      speak(reply, { lang: language === "es" ? "es-ES" : "en-US" })
+      setTimeout(() => setStatus("ambient"), Math.max(1800, reply.length * 35))
+    },
+    [language, pushTranscript, speak],
+  )
 
   // Bootstrap workflow session on mount.
   useEffect(() => {
@@ -183,6 +227,7 @@ export function CompanionProvider({ children }: { children: ReactNode }) {
       toolCalls,
       checkIn,
       advance: advanceCall,
+      tellRiad,
     }),
     [
       phase,
@@ -200,6 +245,7 @@ export function CompanionProvider({ children }: { children: ReactNode }) {
       updateProfile,
       pushTranscript,
       clearTranscript,
+      tellRiad,
     ],
   )
 
@@ -213,6 +259,43 @@ function mergeFactorsByKey(
   const map = new Map(prev.map((f) => [f.key, f]))
   for (const f of next) map.set(f.key, f)
   return Array.from(map.values())
+}
+
+function mergeProfile(prev: EmployeeProfile, next: EmployeeProfile): EmployeeProfile {
+  return {
+    ...prev,
+    ...next,
+    factors: mergeFactorsByKey(prev.factors, next.factors ?? []),
+    expectedEvents: Array.from(
+      new Set([...(prev.expectedEvents ?? []), ...(next.expectedEvents ?? [])]),
+    ),
+    priorities: Array.from(
+      new Set([...(prev.priorities ?? []), ...(next.priorities ?? [])]),
+    ),
+  }
+}
+
+function composeFallbackReply(utter: string, lang: Language): string {
+  const u = utter.toLowerCase()
+  if (lang === "es") {
+    if (/bebé|bebe|embaraz/.test(u)) {
+      return "Anotado. Voy a marcar ese mes como un hito."
+    }
+    if (/medic|recet|pastil/.test(u)) {
+      return "Lo anoto: medicación. Eso favorece copagos predecibles."
+    }
+    return "Te escucho. Lo guardo como contexto."
+  }
+  if (/baby|pregnan/.test(u)) {
+    return "Got it — I'll pin that month as a milestone."
+  }
+  if (/prescription|medic/.test(u)) {
+    return "Noting that. Pushes us toward predictable copays."
+  }
+  if (/er |emergency|hospital/.test(u)) {
+    return "Okay. Let's compare both plans with that in the mix."
+  }
+  return "I hear you. I'll keep that as context."
 }
 
 export function useCompanion(): CompanionState {

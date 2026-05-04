@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect } from "react"
+import { useCallback, useEffect, useRef } from "react"
 import { useCompanion } from "./companion-context"
 import { CompanionAvatar } from "./companion-avatar"
 import { PacingControls } from "./pacing-controls"
@@ -26,8 +26,8 @@ export function CompanionPanel() {
     setStatus,
     language,
     setLanguage,
-    pushTranscript,
     profile,
+    tellRiad,
   } = useCompanion()
 
   const speechLang = language === "es" ? "es-ES" : "en-US"
@@ -43,7 +43,7 @@ export function CompanionPanel() {
     reset,
   } = useSpeechRecognition({
     lang: speechLang,
-    continuous: false,
+    continuous: true,
     interimResults: true,
   })
   const { supported: ttsSupported, speak, error: ttsError } = useSpeechSynthesis()
@@ -54,26 +54,22 @@ export function CompanionPanel() {
     else if (status === "listening") setStatus("ambient")
   }, [listening, setStatus, status])
 
-  // Commit a finalized utterance to the transcript and respond
+  // Flush the accumulated transcript through the agent when the user stops the mic.
+  const wasListeningRef = useRef(false)
+  const finalTranscriptRef = useRef("")
   useEffect(() => {
-    if (!finalTranscript) return
-    const utter = finalTranscript.trim()
-    if (!utter) return
-    pushTranscript("you", utter, language)
-    setStatus("thinking")
-    const reply = composeReply(utter, language)
-    const replyDelay = 700
-    const timeout = setTimeout(() => {
-      pushTranscript("riad", reply, language)
-      setStatus("speaking")
-      speak(reply, { lang: speechLang })
-      // Drift back to ambient shortly after
-      setTimeout(() => setStatus("ambient"), Math.max(1800, reply.length * 35))
-    }, replyDelay)
-    reset()
-    return () => clearTimeout(timeout)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    finalTranscriptRef.current = finalTranscript
   }, [finalTranscript])
+  useEffect(() => {
+    if (wasListeningRef.current && !listening) {
+      const utter = finalTranscriptRef.current.trim()
+      if (utter) {
+        void tellRiad(utter)
+      }
+      reset()
+    }
+    wasListeningRef.current = listening
+  }, [listening, tellRiad, reset])
 
   const onToggleMic = useCallback(() => {
     if (listening) {
@@ -364,32 +360,3 @@ function buildBanner({
   return null
 }
 
-// Lightweight scripted reply composer — keeps demo self-contained.
-function composeReply(utter: string, lang: "en" | "es"): string {
-  const u = utter.toLowerCase()
-  if (lang === "es") {
-    if (u.includes("bebé") || u.includes("bebe")) {
-      return "Entiendo. Voy a marcar agosto como un mes de cambio. ¿Quieres que reviva los próximos 12 meses con eso en cuenta?"
-    }
-    if (u.includes("urgenc") || u.includes("hospital")) {
-      return "Vale. Vamos a comparar los dos planes con una visita a urgencias. La diferencia podría ser grande."
-    }
-    if (u.includes("medic") || u.includes("recet")) {
-      return "Lo anoto: medicación diaria. Eso favorece copagos predecibles. Lo veremos en el plan año a año."
-    }
-    return "Te escucho. Lo guardo como contexto. ¿Quieres pasar al recorrido de los próximos 12 meses?"
-  }
-  if (u.includes("baby") || u.includes("pregnan")) {
-    return "Got it — I'll pin August as a milestone. Want me to walk the next twelve months with that in mind?"
-  }
-  if (u.includes("er ") || u.includes("emergency") || u.includes("hospital")) {
-    return "Okay. Let's compare both plans with one ER visit in the mix. The gap can be meaningful."
-  }
-  if (u.includes("prescription") || u.includes("medic")) {
-    return "Noting daily prescription. That nudges toward predictable copays. We'll see it in the year-ahead view."
-  }
-  if (u.includes("price") || u.includes("cost") || u.includes("paycheck")) {
-    return "I'll show paycheck-by-paycheck side by side so you can feel it before you commit."
-  }
-  return "I'm listening. Let me hold that as context. Ready to walk through the next twelve months together?"
-}
