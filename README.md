@@ -2,7 +2,7 @@
 
 Voice-first benefits companion that walks an employee through 12 months of decisions, not a one-shot enrollment wizard. Built for the Vercel hackathon on the **Workflow Development Kit (WDK)** track, layered with a custom **Benefits-Knowledge MCP** server.
 
-> **Live demo:** _add Vercel URL after first deploy_
+> **Live demo:** https://v0-riad.vercel.app/
 
 ## What it does
 
