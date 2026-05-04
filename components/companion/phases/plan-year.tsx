@@ -10,21 +10,28 @@ import {
   TrendingUp,
   Sparkles,
 } from "lucide-react"
-import { plans } from "@/lib/companion/sample-data"
-import { computePlanCosts, formatCurrency, MONTH_LABELS } from "@/lib/companion/year-ahead-utils"
+import { PLANS, PLAN_MONTHS } from "@/lib/companion/sample-data"
+import { getActiveEvents, projectPlan, formatUSD } from "@/lib/companion/year-ahead-utils"
 
 type CheckIn = {
   id: string
   whenLabel: string
   title: string
   prompt: string
-  modeHint: string
+  modeHint: "ambient" | "co-pilot"
 }
 
 export function PlanYearPhase() {
-  const { language, selectedPlanId, activeEvents, severity, setMode, speak } = useCompanion()
-  const plan = plans.find((p) => p.id === selectedPlanId) ?? plans[0]
-  const cost = useMemo(() => computePlanCosts(plan, activeEvents, severity), [plan, activeEvents, severity])
+  const {
+    language,
+    selectedPlanId,
+    activeScenarioId,
+    pushTranscript,
+    setStatus,
+  } = useCompanion()
+  const plan = PLANS.find((p) => p.id === selectedPlanId) ?? PLANS[0]
+  const events = useMemo(() => getActiveEvents(activeScenarioId), [activeScenarioId])
+  const cost = useMemo(() => projectPlan(plan, events), [plan, events])
 
   const checkIns: CheckIn[] = useMemo(
     () => [
@@ -87,9 +94,9 @@ export function PlanYearPhase() {
   // Highlight FSA / HSA deadlines that fall in the year.
   const deadlines = useMemo(() => {
     const list: { month: string; label: string }[] = []
-    if (plan.id.includes("hdhp")) {
+    if (plan.kind === "HDHP+HSA") {
       list.push({
-        month: MONTH_LABELS[3],
+        month: PLAN_MONTHS[3],
         label:
           language === "es"
             ? "Último día para contribuir al HSA del año anterior"
@@ -97,14 +104,14 @@ export function PlanYearPhase() {
       })
     }
     list.push({
-      month: MONTH_LABELS[2],
+      month: PLAN_MONTHS[2],
       label:
         language === "es"
           ? "Periodo de gracia FSA termina"
           : "FSA grace period ends",
     })
     list.push({
-      month: MONTH_LABELS[10],
+      month: PLAN_MONTHS[10],
       label:
         language === "es"
           ? "Próxima inscripción abierta"
@@ -114,16 +121,17 @@ export function PlanYearPhase() {
   }, [plan, language])
 
   useEffect(() => {
-    setMode("ambient")
     const t = setTimeout(() => {
-      speak(
+      pushTranscript(
+        "riad",
         language === "es"
           ? "Cambio a modo ambiente. Estaré aquí, en silencio, hasta que algo importante se acerque."
           : "Switching to ambient mode. I'll stay here, quietly, until something important is near.",
       )
+      setStatus("ambient")
     }, 400)
     return () => clearTimeout(t)
-  }, [setMode, speak, language])
+  }, [language, pushTranscript, setStatus])
 
   return (
     <section className="flex flex-col gap-6">
@@ -132,12 +140,12 @@ export function PlanYearPhase() {
           <CheckCircle2 className="h-3 w-3" />
           {language === "es" ? "Etapa cuatro · Año del plan" : "Stage four · Plan year"}
         </p>
-        <h2 className="font-serif text-3xl leading-tight tracking-tight text-foreground text-balance md:text-4xl">
+        <h2 className="font-serif text-3xl leading-tight tracking-tight text-balance text-foreground md:text-4xl">
           {language === "es"
             ? "Doce meses, no un único momento."
             : "Twelve months, not a single moment."}
         </h2>
-        <p className="mt-2 max-w-prose text-pretty leading-relaxed text-muted-foreground">
+        <p className="mt-2 max-w-prose leading-relaxed text-pretty text-muted-foreground">
           {language === "es"
             ? "El día que firmas no es el final. Aquí está cómo seguiré contigo durante el año del plan."
             : "The day you sign isn't the end. Here's how I'll stay with you across the plan year."}
@@ -155,13 +163,13 @@ export function PlanYearPhase() {
         <div className="flex flex-wrap items-baseline gap-x-6 gap-y-2">
           <p className="font-serif text-2xl text-foreground">{plan.name}</p>
           <p className="font-mono text-sm text-muted-foreground">
-            {formatCurrency(cost.totalAnnual)}{" "}
+            {formatUSD(cost.totalAnnual)}{" "}
             <span className="ml-1 text-xs uppercase tracking-[0.15em]">
               {language === "es" ? "estimado anual" : "est. annual"}
             </span>
           </p>
           <p className="font-mono text-sm text-muted-foreground">
-            {formatCurrency(plan.outOfPocketMax)}{" "}
+            {formatUSD(plan.oopMax)}{" "}
             <span className="ml-1 text-xs uppercase tracking-[0.15em]">
               {language === "es" ? "tope de gastos" : "out-of-pocket ceiling"}
             </span>
