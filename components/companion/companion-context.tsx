@@ -4,19 +4,29 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react"
 import type {
+  CheckInPayload,
   CompanionStatus,
   EmployeeProfile,
   Language,
   Phase,
+  ToolCallLog,
   TranscriptEntry,
   TranscriptRole,
+  YearAheadPayload,
 } from "@/lib/companion/types"
 import { SAMPLE_PROFILE } from "@/lib/companion/sample-data"
+import {
+  advance as advanceCall,
+  startSession,
+  subscribeToSession,
+} from "@/lib/companion/session-client"
 
 interface CompanionState {
   phase: Phase
@@ -36,6 +46,12 @@ interface CompanionState {
   setActiveScenarioId: (id: string | null) => void
   decisionRationale: string
   setDecisionRationale: (s: string) => void
+  // Workflow-driven additions
+  sessionId: string | null
+  yearAhead: YearAheadPayload | null
+  toolCalls: ToolCallLog[]
+  checkIn: CheckInPayload | null
+  advance: typeof advanceCall
 }
 
 const CompanionContext = createContext<CompanionState | null>(null)
@@ -65,6 +81,12 @@ export function CompanionProvider({ children }: { children: ReactNode }) {
   const [activeScenarioId, setActiveScenarioId] = useState<string | null>(null)
   const [decisionRationale, setDecisionRationale] = useState<string>("")
 
+  const [sessionId, setSessionId] = useState<string | null>(null)
+  const [yearAhead, setYearAhead] = useState<YearAheadPayload | null>(null)
+  const [toolCalls, setToolCalls] = useState<ToolCallLog[]>([])
+  const [checkIn, setCheckIn] = useState<CheckInPayload | null>(null)
+  const subscriptionRef = useRef<{ close: () => void } | null>(null)
+
   const pushTranscript = useCallback(
     (role: TranscriptRole, text: string, lang?: Language) => {
       const entry: TranscriptEntry = {
@@ -76,7 +98,7 @@ export function CompanionProvider({ children }: { children: ReactNode }) {
       }
       setTranscript((prev) => [...prev, entry])
     },
-    [language]
+    [language],
   )
 
   const updateProfile = useCallback((next: Partial<EmployeeProfile>) => {
@@ -84,9 +106,7 @@ export function CompanionProvider({ children }: { children: ReactNode }) {
       const merged: EmployeeProfile = {
         ...prev,
         ...next,
-        factors: next.factors
-          ? mergeFactorsByKey(prev.factors, next.factors)
-          : prev.factors,
+        factors: next.factors ? mergeFactorsByKey(prev.factors, next.factors) : prev.factors,
         expectedEvents: next.expectedEvents
           ? Array.from(new Set([...(prev.expectedEvents ?? []), ...(next.expectedEvents ?? [])]))
           : prev.expectedEvents,
@@ -100,6 +120,43 @@ export function CompanionProvider({ children }: { children: ReactNode }) {
 
   const clearTranscript = useCallback(() => {
     setTranscript(SEED_TRANSCRIPT)
+  }, [])
+
+  // Bootstrap workflow session on mount.
+  useEffect(() => {
+    let cancelled = false
+    ;(async () => {
+      try {
+        const { sessionId: sid } = await startSession()
+        if (cancelled) return
+        setSessionId(sid)
+        const sub = subscribeToSession(sid, (evt) => {
+          if (evt.event === "step.completed") {
+            const data = evt.data as { step: string; payload: unknown }
+            if (data.step === "projectYearAhead") {
+              setYearAhead(data.payload as YearAheadPayload)
+            } else if (data.step === "ingestInterview") {
+              const payload = data.payload as { profile: EmployeeProfile; summary: string }
+              if (payload?.profile) {
+                setProfile(payload.profile)
+              }
+            }
+          } else if (evt.event === "step.checkin.fired") {
+            setCheckIn(evt.data)
+          } else if (evt.event === "tool.call.logged") {
+            setToolCalls((prev) => [...prev, evt.data])
+          }
+        })
+        subscriptionRef.current = sub
+      } catch (err) {
+        console.warn("[companion-context] failed to start session:", err)
+      }
+    })()
+    return () => {
+      cancelled = true
+      subscriptionRef.current?.close()
+      subscriptionRef.current = null
+    }
   }, [])
 
   const value = useMemo<CompanionState>(
@@ -121,6 +178,11 @@ export function CompanionProvider({ children }: { children: ReactNode }) {
       setActiveScenarioId,
       decisionRationale,
       setDecisionRationale,
+      sessionId,
+      yearAhead,
+      toolCalls,
+      checkIn,
+      advance: advanceCall,
     }),
     [
       phase,
@@ -131,10 +193,14 @@ export function CompanionProvider({ children }: { children: ReactNode }) {
       selectedPlanId,
       activeScenarioId,
       decisionRationale,
+      sessionId,
+      yearAhead,
+      toolCalls,
+      checkIn,
       updateProfile,
       pushTranscript,
       clearTranscript,
-    ]
+    ],
   )
 
   return <CompanionContext.Provider value={value}>{children}</CompanionContext.Provider>
@@ -142,7 +208,7 @@ export function CompanionProvider({ children }: { children: ReactNode }) {
 
 function mergeFactorsByKey(
   prev: EmployeeProfile["factors"],
-  next: EmployeeProfile["factors"]
+  next: EmployeeProfile["factors"],
 ): EmployeeProfile["factors"] {
   const map = new Map(prev.map((f) => [f.key, f]))
   for (const f of next) map.set(f.key, f)

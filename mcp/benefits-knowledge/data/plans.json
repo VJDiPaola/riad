@@ -1,0 +1,113 @@
+{
+  "plans": [
+    {
+      "id": "argan-ppo",
+      "name": "Argan PPO",
+      "kind": "PPO",
+      "monthlyPremium": 312,
+      "deductible": 750,
+      "oopMax": 4000,
+      "prescriptionCopay": 15,
+      "preventiveCovered": [
+        "Annual physical",
+        "Two dental cleanings/year",
+        "Flu and routine vaccinations",
+        "Prenatal visits",
+        "Well-child visits"
+      ],
+      "formularyTier": {
+        "lisinopril": "tier1",
+        "atorvastatin": "tier1",
+        "sertraline": "tier2",
+        "ozempic": "tier3"
+      }
+    },
+    {
+      "id": "atlas-hdhp",
+      "name": "Atlas HDHP + HSA",
+      "kind": "HDHP+HSA",
+      "monthlyPremium": 168,
+      "deductible": 3200,
+      "oopMax": 6500,
+      "prescriptionCopay": 0,
+      "hsaContribution": 1200,
+      "preventiveCovered": [
+        "Annual physical",
+        "Two dental cleanings/year",
+        "Flu and routine vaccinations",
+        "Prenatal visits",
+        "Well-child visits"
+      ],
+      "formularyTier": {
+        "lisinopril": "tier1",
+        "atorvastatin": "tier1",
+        "sertraline": "tier2",
+        "ozempic": "tier3"
+      }
+    }
+  ],
+  "baseEvents": [
+    {
+      "id": "physical",
+      "monthIndex": 1,
+      "label": "Annual physical",
+      "category": "expected",
+      "estCostByPlan": { "argan-ppo": 0, "atlas-hdhp": 0 },
+      "note": "Preventive — covered at 100% under both plans."
+    },
+    {
+      "id": "prescription-refills",
+      "monthIndex": 0,
+      "label": "Daily prescription, monthly refill",
+      "category": "expected",
+      "estCostByPlan": { "argan-ppo": 180, "atlas-hdhp": 456 },
+      "note": "Argan PPO: $15 copay × 12. Atlas HDHP: ~$38/mo until deductible is met."
+    },
+    {
+      "id": "dental-spring",
+      "monthIndex": 3,
+      "label": "Dental cleaning",
+      "category": "expected",
+      "estCostByPlan": { "argan-ppo": 0, "atlas-hdhp": 0 },
+      "note": "Both plans cover two cleanings a year."
+    },
+    {
+      "id": "ob-visit",
+      "monthIndex": 6,
+      "label": "Prenatal visit window",
+      "category": "expected",
+      "estCostByPlan": { "argan-ppo": 40, "atlas-hdhp": 380 },
+      "note": "Argan PPO: copay only. Atlas HDHP: counts toward deductible."
+    },
+    {
+      "id": "baby",
+      "monthIndex": 7,
+      "label": "Baby due",
+      "category": "milestone",
+      "estCostByPlan": { "argan-ppo": 1500, "atlas-hdhp": 3200 },
+      "note": "Estimated employee responsibility after coverage. Atlas HDHP hits deductible here."
+    },
+    {
+      "id": "fsa-deadline",
+      "monthIndex": 11,
+      "label": "FSA spend-down deadline",
+      "category": "deadline",
+      "note": "Use FSA balance by Dec 31 or forfeit it."
+    },
+    {
+      "id": "open-enrollment",
+      "monthIndex": 10,
+      "label": "Next open enrollment",
+      "category": "deadline",
+      "note": "Window to re-elect or change plans."
+    },
+    {
+      "id": "er-possible",
+      "monthIndex": 4,
+      "label": "Possible ER visit",
+      "category": "possible",
+      "estCostByPlan": { "argan-ppo": 250, "atlas-hdhp": 2400 },
+      "note": "Rough-year scenario. PPO: copay. HDHP: full cost until deductible."
+    }
+  ]
+}

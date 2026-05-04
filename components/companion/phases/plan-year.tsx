@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useCompanion } from "../companion-context"
 import {
   CheckCircle2,
@@ -9,7 +9,9 @@ import {
   HeartHandshake,
   TrendingUp,
   Sparkles,
+  Radio,
 } from "lucide-react"
+import { Button } from "@/components/ui/button"
 import { PLANS, PLAN_MONTHS } from "@/lib/companion/sample-data"
 import { getActiveEvents, projectPlan, formatUSD } from "@/lib/companion/year-ahead-utils"
 
@@ -28,10 +30,26 @@ export function PlanYearPhase() {
     activeScenarioId,
     pushTranscript,
     setStatus,
+    sessionId,
+    advance,
+    checkIn,
   } = useCompanion()
   const plan = PLANS.find((p) => p.id === selectedPlanId) ?? PLANS[0]
   const events = useMemo(() => getActiveEvents(activeScenarioId), [activeScenarioId])
   const cost = useMemo(() => projectPlan(plan, events), [plan, events])
+  const [simulating, setSimulating] = useState(false)
+
+  async function simulateCheckIn() {
+    if (!sessionId) return
+    setSimulating(true)
+    try {
+      await advance(sessionId, { step: "scheduledCheckIn", input: { simulate: true } })
+    } catch (err) {
+      console.warn("[plan-year] simulate check-in failed:", err)
+    } finally {
+      setSimulating(false)
+    }
+  }
 
   const checkIns: CheckIn[] = useMemo(
     () => [
@@ -151,6 +169,58 @@ export function PlanYearPhase() {
             : "The day you sign isn't the end. Here's how I'll stay with you across the plan year."}
         </p>
       </header>
+
+      {/* Durable check-in banner */}
+      <div
+        className={
+          checkIn
+            ? "rounded-2xl border border-primary/50 bg-primary/5 p-5 shadow-sm"
+            : "rounded-2xl border border-dashed border-border/70 bg-card p-5"
+        }
+      >
+        <div className="flex flex-wrap items-start gap-3">
+          <Radio className={checkIn ? "mt-1 h-5 w-5 text-primary" : "mt-1 h-5 w-5 text-muted-foreground"} aria-hidden="true" />
+          <div className="flex-1">
+            <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+              {language === "es" ? "Visita programada (workflow durable)" : "Durable workflow check-in"}
+            </p>
+            {checkIn ? (
+              <>
+                <p className="mt-1 font-serif text-lg text-foreground">{checkIn.banner}</p>
+                <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{checkIn.detail}</p>
+                {checkIn.metricLabel ? (
+                  <p className="mt-2 inline-flex items-center gap-2 rounded-full bg-background px-3 py-1 font-mono text-xs text-foreground">
+                    <span className="text-muted-foreground">{checkIn.metricLabel}</span>
+                    <span>{checkIn.metricValue}</span>
+                  </p>
+                ) : null}
+              </>
+            ) : (
+              <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                {language === "es"
+                  ? "El temporizador durable está corriendo. Cuando llegue el primer cheque, te lo digo aquí. Para acelerar la demo, simula la visita."
+                  : "The durable timer is running. When the first paycheck lands, you'll see it here. To fast-forward the demo, simulate the check-in."}
+              </p>
+            )}
+          </div>
+          <Button
+            type="button"
+            size="sm"
+            variant={checkIn ? "outline" : "default"}
+            onClick={simulateCheckIn}
+            disabled={simulating || !sessionId}
+            className="rounded-full"
+          >
+            {simulating
+              ? language === "es"
+                ? "Simulando…"
+                : "Simulating…"
+              : language === "es"
+                ? "Simular visita"
+                : "Simulate check-in"}
+          </Button>
+        </div>
+      </div>
 
       {/* Snapshot */}
       <div className="rounded-2xl border border-border/70 bg-card p-5 shadow-sm">

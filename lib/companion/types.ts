@@ -65,3 +65,112 @@ export interface ScenarioOverride {
   label: string
   events: YearEvent[]
 }
+
+export interface ScenarioInjection {
+  id: string
+  label: string
+  shifts?: { eventId: string; toMonthIndex: number }[]
+  adds?: YearEvent[]
+}
+
+export interface Citation {
+  source: string
+  snippet: string
+  toolCall?: string
+}
+
+export interface MonthProjection {
+  monthIndex: number
+  monthLabel: string
+  premium: number
+  expectedOOP: number
+  hsaFsaFlow: number
+  events: YearEvent[]
+  cumulative: number
+}
+
+export interface ComparisonRow {
+  planId: string
+  planName: string
+  totalAnnual: number
+  worstMonth: { monthIndex: number; amount: number }
+  paycheckBiweekly: number
+  highlights: string[]
+}
+
+export interface ProviderSummary {
+  name: string
+  specialty: string
+  zip: string
+  inNetwork: boolean
+  distanceMiles: number
+}
+
+export interface PlanSummary {
+  id: string
+  name: string
+  kind: "PPO" | "HDHP+HSA"
+  monthlyPremium: number
+  deductible: number
+  oopMax: number
+  prescriptionCopay: number
+  hsaContribution?: number
+  preventiveCovered: string[]
+  formularyTier: Record<string, "tier1" | "tier2" | "tier3">
+}
+
+export interface YearAheadPayload {
+  rows: ComparisonRow[]
+  months: Record<string, MonthProjection[]>
+  narration: string
+  citations: Citation[]
+}
+
+export interface CheckInPayload {
+  firedAt: number
+  banner: string
+  detail: string
+  metricLabel?: string
+  metricValue?: string
+}
+
+export type WorkflowStep =
+  | "idle"
+  | "ingestInterview"
+  | "projectYearAhead"
+  | "scheduledCheckIn"
+  | "hrEscalation"
+
+export interface SessionState {
+  sessionId: string
+  currentStep: WorkflowStep
+  profile: EmployeeProfile
+  yearAhead?: YearAheadPayload
+  lastCheckIn?: CheckInPayload
+  toolCalls: ToolCallLog[]
+}
+
+export interface ToolCallLog {
+  id: string
+  at: number
+  tool: string
+  args: unknown
+  citation?: Citation
+}
+
+export type AdvanceBody =
+  | { step: "ingestInterview"; input: { transcript: string; language: Language } }
+  | { step: "projectYearAhead"; input: { scenario?: ScenarioInjection; planIds?: string[] } }
+  | { step: "scheduledCheckIn"; input: { simulate: true } }
+
+export interface AdvanceResponse {
+  step: WorkflowStep
+  payload: unknown
+}
+
+export type SessionSSEEvent =
+  | { event: "step.completed"; data: { step: WorkflowStep; payload: unknown } }
+  | { event: "step.checkin.fired"; data: CheckInPayload }
+  | { event: "tool.call.logged"; data: ToolCallLog }
+  | { event: "ready"; data: { sessionId: string } }
+  | { event: "ping"; data: { at: number } }

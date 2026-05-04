@@ -1,0 +1,40 @@
+{
+  "argan-ppo": {
+    "summary": {
+      "source": "Argan PPO Summary Plan Description, p.2",
+      "snippet": "Argan PPO carries a $312/mo employee share, $750 deductible, and a $4,000 individual out-of-pocket maximum. Prescription copays are tiered with a $15 generic copay."
+    },
+    "preventive": {
+      "source": "Argan PPO SPD, p.7 (Preventive Care)",
+      "snippet": "All in-network preventive services — annual physical, prenatal, dental cleanings (2/yr), and well-child — are covered at 100% with no deductible."
+    },
+    "ob": {
+      "source": "Argan PPO SPD, p.14 (Maternity)",
+      "snippet": "Prenatal visits are covered at 100% under preventive care; delivery and postpartum care apply to deductible and 80/20 coinsurance until OOP max is reached."
+    }
+  },
+  "atlas-hdhp": {
+    "summary": {
+      "source": "Atlas HDHP+HSA Summary Plan Description, p.2",
+      "snippet": "Atlas HDHP carries a $168/mo employee share, $3,200 deductible, $6,500 OOP max. Employer contributes $1,200/yr to your HSA. Prescriptions apply to deductible until met."
+    },
+    "preventive": {
+      "source": "Atlas HDHP SPD, p.6 (Preventive Care)",
+      "snippet": "Preventive services are covered at 100% before the deductible per ACA rules. This includes annual physical, prenatal visits, and dental cleanings (2/yr)."
+    },
+    "ob": {
+      "source": "Atlas HDHP SPD, p.13 (Maternity)",
+      "snippet": "Maternity-related services beyond preventive prenatal apply fully to the deductible. Delivery alone typically exceeds the deductible; OOP max protects after that."
+    }
+  },
+  "scenario": {
+    "rough-year": {
+      "source": "Argan PPO + Atlas HDHP comparison brief, p.4",
+      "snippet": "Under a rough-year scenario including one ER visit and weekly therapy, Atlas HDHP exposure exceeds the PPO until OOP max is reached in month 9 or earlier."
+    },
+    "baby-march": {
+      "source": "Argan PPO SPD, p.14 / Atlas HDHP SPD, p.13",
+      "snippet": "An earlier delivery month front-loads cost: PPO copays apply per visit, HDHP costs apply to deductible until met, then 100% covered to OOP max."
+    }
+  }
+}

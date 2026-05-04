@@ -1,15 +1,27 @@
 "use client"
 
-import { useMemo, useState } from "react"
-import { ArrowRight, Sparkles } from "lucide-react"
+import { useEffect, useMemo, useRef, useState } from "react"
+import { ArrowRight, BookOpen, Sparkles } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useCompanion } from "@/components/companion/companion-context"
-import { PLANS } from "@/lib/companion/sample-data"
+import { PLANS, SCENARIOS } from "@/lib/companion/sample-data"
 import { getActiveEvents, projectPlan, formatUSD } from "@/lib/companion/year-ahead-utils"
 import { ScenarioControls } from "@/components/companion/year-ahead/scenario-controls"
 import { TimelineGrid } from "@/components/companion/year-ahead/timeline-grid"
 import { MonthDetail } from "@/components/companion/year-ahead/month-detail"
 import { PlanSummaryCard } from "@/components/companion/year-ahead/plan-summary-card"
+import type { ScenarioInjection } from "@/lib/companion/types"
+
+function scenarioToInjection(scenarioId: string | null): ScenarioInjection | undefined {
+  if (!scenarioId) return undefined
+  const sc = SCENARIOS.find((s) => s.id === scenarioId)
+  if (!sc) return undefined
+  return {
+    id: sc.id,
+    label: sc.label,
+    adds: sc.events,
+  }
+}
 
 export function YearAheadPhase() {
   const {
@@ -21,7 +33,21 @@ export function YearAheadPhase() {
     pushTranscript,
     setStatus,
     setPhase,
+    sessionId,
+    advance,
+    yearAhead,
   } = useCompanion()
+  const lastRequestedScenarioRef = useRef<string | null | undefined>(undefined)
+
+  useEffect(() => {
+    if (!sessionId) return
+    if (lastRequestedScenarioRef.current === activeScenarioId) return
+    lastRequestedScenarioRef.current = activeScenarioId
+    advance(sessionId, {
+      step: "projectYearAhead",
+      input: { scenario: scenarioToInjection(activeScenarioId) },
+    }).catch((err) => console.warn("[year-ahead] projectYearAhead failed:", err))
+  }, [sessionId, activeScenarioId, advance])
 
   const [focusedMonth, setFocusedMonth] = useState<number>(7)
   const events = useMemo(() => getActiveEvents(activeScenarioId), [activeScenarioId])
@@ -94,6 +120,32 @@ export function YearAheadPhase() {
       </header>
 
       <ScenarioControls activeScenarioId={activeScenarioId} onChange={handleScenarioChange} />
+
+      {yearAhead ? (
+        <div className="rounded-xl border bg-card p-5">
+          <div className="flex items-start gap-3">
+            <BookOpen className="mt-0.5 h-4 w-4 text-primary" aria-hidden />
+            <div className="flex-1">
+              <h4 className="font-serif text-base text-foreground">From the agent + benefits MCP</h4>
+              <p className="mt-1 text-sm leading-relaxed text-foreground">{yearAhead.narration}</p>
+              {yearAhead.citations?.length ? (
+                <ul className="mt-3 flex flex-wrap gap-2">
+                  {yearAhead.citations.slice(0, 4).map((c, idx) => (
+                    <li
+                      key={`${c.source}-${idx}`}
+                      className="rounded-full border border-accent/40 bg-accent/5 px-3 py-1 text-[11px] text-foreground"
+                      title={c.snippet}
+                    >
+                      <span className="font-medium">{c.source}</span>
+                      <span className="ml-1 text-muted-foreground">— {c.snippet.slice(0, 80)}{c.snippet.length > 80 ? "…" : ""}</span>
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       <TimelineGrid ppoProjection={ppo} hdhpProjection={hdhp} />
 

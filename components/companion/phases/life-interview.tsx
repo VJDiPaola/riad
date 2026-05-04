@@ -21,22 +21,39 @@ export function LifeInterviewPhase() {
     updateProfile,
     profile,
     setPhase,
+    sessionId,
+    advance,
   } = useCompanion()
   const { speak } = useSpeechSynthesis()
   const [typed, setTyped] = useState("")
 
   const prompts = language === "es" ? SUGGESTED_PROMPTS_ES : SUGGESTED_PROMPTS_EN
 
-  function tellRiad(text: string) {
+  async function tellRiad(text: string) {
     pushTranscript("you", text, language)
     setStatus("thinking")
-    const reply = composeNarrativeReply(text, language)
-    setTimeout(() => {
-      pushTranscript("riad", reply, language)
-      setStatus("speaking")
-      speak(reply, { lang: language === "es" ? "es-ES" : "en-US" })
-      setTimeout(() => setStatus("ambient"), Math.max(1800, reply.length * 35))
-    }, 500)
+    let reply = composeNarrativeReply(text, language)
+    if (sessionId) {
+      try {
+        const result = await advance(sessionId, {
+          step: "ingestInterview",
+          input: { transcript: text, language },
+        })
+        const payload = result.payload as { summary?: string; profile?: typeof profile }
+        if (payload?.profile) {
+          updateProfile(payload.profile)
+        }
+        if (payload?.summary) {
+          reply = payload.summary
+        }
+      } catch (err) {
+        console.warn("[life-interview] advance failed, using local reply:", err)
+      }
+    }
+    pushTranscript("riad", reply, language)
+    setStatus("speaking")
+    speak(reply, { lang: language === "es" ? "es-ES" : "en-US" })
+    setTimeout(() => setStatus("ambient"), Math.max(1800, reply.length * 35))
   }
 
   function applySampleProfile() {
