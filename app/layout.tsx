@@ -18,11 +18,42 @@ const fraunces = Fraunces({
   axes: ["SOFT", "opsz"],
 })
 
+const SITE_URL = "https://v0-riad.vercel.app"
+const OG_TITLE = "Riad — A benefits companion that walks with you"
+const OG_DESCRIPTION =
+  "A voice-first benefits companion that body-doubles employees through enrollment and stays present for the full 12 months until the next election."
+
 export const metadata: Metadata = {
-  title: "Riad — A benefits companion that walks with you",
-  description:
-    "A voice-first benefits companion that body-doubles employees through enrollment and stays present for the full 12 months until the next election.",
+  metadataBase: new URL(SITE_URL),
+  title: OG_TITLE,
+  description: OG_DESCRIPTION,
+  applicationName: "Riad",
   generator: "v0.app",
+  openGraph: {
+    type: "website",
+    url: SITE_URL,
+    siteName: "Riad",
+    title: OG_TITLE,
+    description: OG_DESCRIPTION,
+    images: [
+      {
+        url: "/opengraph-image.jpg",
+        width: 1200,
+        height: 630,
+        alt: "A calm Moroccan riad courtyard at golden hour, representing the Riad benefits companion.",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: OG_TITLE,
+    description: OG_DESCRIPTION,
+    images: ["/twitter-image.jpg"],
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 }
 
 export const viewport: Viewport = {
